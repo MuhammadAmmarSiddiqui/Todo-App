@@ -1,0 +1,82 @@
+# CLI Todo App
+
+A command-line todo application with in-memory storage that allows users to perform CRUD operations on tasks (Add, View, Update, Delete) and mark tasks as complete/incomplete.
+
+## Features
+
+- Add new tasks with titles and descriptions
+- View all tasks in a formatted list
+- Update existing tasks
+- Delete tasks
+- Mark tasks as complete/incomplete
+- In-memory storage for session duration
+
+## Important Note: Data Persistence
+
+**This application uses in-memory storage only. All data is lost when the application closes or is restarted.** This is by design as specified in the requirements. Tasks are stored in memory during a single command execution and will not persist between different CLI command runs. This means:
+
+- Tasks added with one command (e.g., `add`) will not be visible to another command (e.g., `list`) because each command creates a fresh in-memory store
+- This is a limitation of the in-memory design as specified in the requirements
+- Data persistence would require file-based or database storage, which is outside the scope of this implementation
+
+## Installation
+
+1. Ensure you have Python 3.13+ installed
+2. Install dependencies with your preferred package manager
+
+## Usage
+
+### Add a new task
+```bash
+python -m src.cli.main add --title "Task title" --description "Task description"
+```
+
+### List all tasks
+```bash
+python -m src.cli.main list
+```
+
+### Update a task
+```bash
+python -m src.cli.main update --id 1 --title "New title" --description "New description"
+```
+
+### Delete a task
+```bash
+python -m src.cli.main delete --id 1
+```
+
+### Mark task as complete/incomplete
+```bash
+python -m src.cli.main complete --id 1    # Mark as complete
+python -m src.cli.main incomplete --id 1  # Mark as incomplete
+```
+
+## Commands
+
+- `add`: Add a new task
+  - `--title`: Task title (required)
+  - `--description`: Task description (optional)
+
+- `list`: List all tasks
+
+- `update`: Update an existing task
+  - `--id`: Task ID (required)
+  - `--title`: New task title (optional)
+  - `--description`: New task description (optional)
+
+- `delete`: Delete a task
+  - `--id`: Task ID (required)
+
+- `complete`: Mark a task as complete
+  - `--id`: Task ID (required)
+
+- `incomplete`: Mark a task as incomplete
+  - `--id`: Task ID (required)
+
+## Validation Rules
+
+- Task titles must be between 1 and 200 characters
+- Task descriptions must be 1000 characters or less
+- Task IDs must be positive integers
+- Task titles cannot be empty
