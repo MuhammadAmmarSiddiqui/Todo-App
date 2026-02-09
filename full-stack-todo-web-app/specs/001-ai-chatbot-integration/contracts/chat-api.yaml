@@ -1,0 +1,402 @@
+# API Contracts: AI-Powered Todo Chatbot
+
+## OpenAPI Specification for Chat Endpoints
+
+```yaml
+openapi: 3.0.1
+info:
+  title: Todo Chat API
+  description: API for conversational todo management
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
+
+paths:
+  /chat/{user_id}/:
+    post:
+      summary: Process natural language input and return AI response
+      description: |
+        Processes a user's natural language message and returns an appropriate response.
+        This endpoint handles all conversational interactions and may trigger MCP tools
+        to perform todo operations.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The user's message in natural language
+                  example: "What tasks do I have pending?"
+                conversation_id:
+                  type: string
+                  format: uuid
+                  description: Optional conversation ID to continue existing conversation
+                  example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      responses:
+        '200':
+          description: Successful response from the AI assistant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The AI's response to the user
+                    example: "You have 3 pending tasks: Buy groceries, Call mom, Finish report"
+                  conversation_id:
+                    type: string
+                    format: uuid
+                    description: The ID of the conversation
+                    example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                  tool_calls:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Name of the tool called
+                        arguments:
+                          type: object
+                          description: Arguments passed to the tool
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+  /chat/{user_id}/conversations:
+    get:
+      summary: Retrieve user's conversation history
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of conversations to return
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          required: false
+          description: Number of conversations to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of user's conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+                  total:
+                    type: integer
+                    description: Total number of conversations
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+  /chat/{user_id}/conversation/{conversation_id}:
+    get:
+      summary: Retrieve specific conversation
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+        - name: conversation_id
+          in: path
+          required: true
+          description: The ID of the conversation
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Details of the specific conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationWithMessages'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Conversation or user not found
+        '500':
+          description: Internal server error
+    delete:
+      summary: Delete specific conversation
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+        - name: conversation_id
+          in: path
+          required: true
+          description: The ID of the conversation
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Conversation deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Conversation or user not found
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the conversation
+        user_id:
+          type: integer
+          description: ID of the user who owns this conversation
+        title:
+          type: string
+          description: Auto-generated title based on first message
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when conversation was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when conversation was last updated
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the message
+        conversation_id:
+          type: string
+          format: uuid
+          description: ID of the conversation this message belongs to
+        role:
+          type: string
+          enum: [user, assistant, tool]
+          description: Role of the message sender
+        content:
+          type: string
+          description: Content of the message
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when message was created
+        tool_calls:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the tool called
+              arguments:
+                type: object
+                description: Arguments passed to the tool
+        tool_responses:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the tool
+              output:
+                type: string
+                description: Output from the tool
+
+    ConversationWithMessages:
+      type: object
+      properties:
+        conversation:
+          $ref: '#/components/schemas/Conversation'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+```
+
+## GraphQL Schema Alternative (Optional)
+
+```graphql
+type Query {
+  conversation(userId: Int!, conversationId: UUID!): Conversation
+  conversations(userId: Int!, limit: Int, offset: Int): ConversationConnection
+}
+
+type Mutation {
+  sendMessage(input: SendMessageInput!): MessageResponse
+  deleteConversation(userId: Int!, conversationId: UUID!): Boolean
+}
+
+input SendMessageInput {
+  userId: Int!
+  message: String!
+  conversationId: UUID
+}
+
+type MessageResponse {
+  response: String!
+  conversationId: UUID!
+  toolCalls: [ToolCall]
+}
+
+type Conversation {
+  id: UUID!
+  userId: Int!
+  title: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  messages: [Message!]!
+}
+
+type Message {
+  id: UUID!
+  conversationId: UUID!
+  role: MessageRole!
+  content: String!
+  timestamp: DateTime!
+  toolCalls: [ToolCall]
+  toolResponses: [ToolResponse]
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  TOOL
+}
+
+type ToolCall {
+  name: String!
+  arguments: JSON
+}
+
+type ToolResponse {
+  name: String!
+  output: String
+}
+
+type ConversationConnection {
+  nodes: [Conversation!]!
+  totalCount: Int!
+}
+```
+
+## MCP Tool Contracts
+
+### add_task
+```json
+{
+  "name": "add_task",
+  "description": "Creates a new task for the authenticated user",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "description": {
+        "type": "string",
+        "description": "Description of the task to create"
+      }
+    },
+    "required": ["description"]
+  }
+}
+```
+
+### list_tasks
+```json
+{
+  "name": "list_tasks",
+  "description": "Lists tasks for the authenticated user",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "completed": {
+        "type": "boolean",
+        "description": "Whether to list completed tasks (default: false)"
+      }
+    }
+  }
+}
+```
+
+### complete_task
+```json
+{
+  "name": "complete_task",
+  "description": "Marks a task as completed for the authenticated user",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "task_id": {
+        "type": "integer",
+        "description": "ID of the task to complete"
+      }
+    },
+    "required": ["task_id"]
+  }
+}
+```
+
+### delete_task
+```json
+{
+  "name": "delete_task",
+  "description": "Deletes a task for the authenticated user",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "task_id": {
+        "type": "integer",
+        "description": "ID of the task to delete"
+      }
+    },
+    "required": ["task_id"]
+  }
+}
+```

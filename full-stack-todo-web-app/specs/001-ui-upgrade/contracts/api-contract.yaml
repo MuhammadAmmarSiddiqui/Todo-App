@@ -1,0 +1,87 @@
+# API Contract: UI Upgrade
+
+## Overview
+This document outlines the API contracts that may be affected by the UI upgrade. Since this is primarily a UI change, the backend APIs should remain unchanged to maintain functionality.
+
+## Authentication Endpoints
+
+### POST /api/auth/login
+**Description**: Authenticate user credentials
+**Request**:
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+**Response**:
+```json
+{
+  "success": "boolean",
+  "token": "string",
+  "user": {
+    "id": "string",
+    "email": "string",
+    "name": "string"
+  }
+}
+```
+
+### POST /api/auth/register
+**Description**: Register a new user
+**Request**:
+```json
+{
+  "email": "string",
+  "password": "string",
+  "name": "string"
+}
+```
+**Response**:
+```json
+{
+  "success": "boolean",
+  "token": "string",
+  "user": {
+    "id": "string",
+    "email": "string",
+    "name": "string"
+  }
+}
+```
+
+### GET /api/dashboard
+**Description**: Retrieve dashboard data for authenticated user
+**Response**:
+```json
+{
+  "todos": [
+    {
+      "id": "string",
+      "title": "string",
+      "completed": "boolean",
+      "createdAt": "datetime"
+    }
+  ]
+}
+```
+
+## UI Configuration Endpoint
+
+### GET /api/ui/config
+**Description**: Retrieve UI configuration (if needed for theming)
+**Response**:
+```json
+{
+  "theme": "light|dark|system",
+  "version": "string",
+  "features": {
+    "newUI": "boolean"
+  }
+}
+```
+
+## Notes
+- All existing API contracts must remain unchanged to ensure functionality is not disturbed
+- New UI should work with existing API responses without requiring backend changes
+- Any new endpoints should follow the same patterns as existing ones
