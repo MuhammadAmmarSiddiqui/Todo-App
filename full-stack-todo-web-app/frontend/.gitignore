@@ -1,0 +1,2 @@
+# Override parent .gitignore to include the lib directory
+!lib/
